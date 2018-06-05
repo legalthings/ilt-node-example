@@ -1,0 +1,268 @@
+{
+    "$schema": "https://specs.livecontracts.io/v0.1.0/scenario/schema.json#",
+    "id": "lt:/scenarios/2ebd1950-1f8a-462a-a207-2963f1b27043",
+    "title": "ILT process",
+    "actors": {
+        "ilt": {
+            "title": "ILT (Dutch regulator)",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#role",
+            "role": "authority"
+        },
+        "license_holder": {
+            "title": "License holder",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
+            "role": "license_holder"
+        },
+        "transport": {
+            "title": "Transport company",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
+            "role": "transport"
+        },
+        "enforcer": {
+            "title": "Enforcer",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#role",
+            "role": "enforcer"
+        },
+        "recipient": {
+            "title": "Recipient / Treatment facility",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
+            "role": "recipient"
+        },
+        "regulator": {
+            "title": "Regulator",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#role",
+            "role": "regulator"
+        }
+    },
+    "assets": {
+        "license_process": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "shipment": {
+            "type": "object",
+            "properties": {
+                "reference": {
+                    "description": "Notification No",
+                    "type": "string"
+                },
+                "quantity": {
+                    "description": "Intended quantity",
+                    "type": "float"
+                }
+            }
+        }
+    },
+    "actions": {
+        "start": {
+            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#data",
+            "actor": "license_holder",
+            "responses": {
+                "ok": {
+                    "title": "Started new shipment process"
+                },
+                "update": [
+                    {
+                        "select": "name",
+                        "data": {
+                            "<tpl>": "Shipment {{ response.data.reference }}"
+                        }
+                    },
+                    {
+                        "select": "assets.shipment",
+                        "data": {
+                            "<ref>": "response.data"
+                        }
+                    },
+                    {
+                        "select": "assets.license_process.id",
+                        "data": {
+                            "<ref>": "response.data.license_process"
+                        }
+                    },
+                    {
+                        "select": "actors.transport",
+                        "data": {
+                            "<ref>": "response.data.transport"
+                        }
+                    },
+                    {
+                        "select": "actors.recipient",
+                        "data": {
+                            "<ref>": "response.data.recipient"
+                        }
+                    }
+                ]
+            }
+        },
+        "verify": {
+            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#event",
+            "actor": "`ilt",
+            "body": {
+                "$schema": "http://specs.legalthings.one/v0.1.0/response/schema.json#",
+                "process": {
+                    "id": {
+                        "<ref>": "assets.license_process.id"
+                    }
+                },
+                "action": {
+                    "key": "verify_shipment"
+                },
+                "key": "ok",
+                "data": {
+                    "shipment": {
+                        "<merge>": [
+                            { "<ref>": "assets.shipment" },
+                            {
+                                "process_id": { "<ref>": "id" }
+                            }
+                        ]
+                    }
+                }
+            },
+            "responses": {
+                "ok": {
+                    "display": "never"
+                }
+            }
+        },
+        "continue": {
+            "responses": {
+                "ok": {
+                    "always": "never"
+                }
+            }
+        },
+        "cancel": {
+            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#event",
+            "actor": "ilt",
+            "body": {
+                "$schema": "http://specs.legalthings.one/v0.1.0/response/schema.json#",
+                "process": {
+                    "id": {
+                        "<ref>": "assets.license_process.id"
+                    }
+                },
+                "action": {
+                    "key": "end_process"
+                },
+                "key": "cancel",
+                "data": {
+                    "<ref>": "assets.shipment"
+                }
+            },
+            "responses": {
+                "title": "Cancelled process",
+                "ok": {
+                    "display": "always"
+                }
+            }
+        },
+        "transport": {
+            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#ack",
+            "actor": "transport",
+            "responses": {
+                "ok": {
+                    "label": "Transport has started"
+                }
+            }
+        },
+        "receive": {
+            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#ack",
+            "actor": "recipient",
+            "responses": {
+                "ok": {
+                    "label": "Shipment is received"
+                }
+            }
+        },
+        "complete": {
+            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#event",
+            "actor": "ilt",
+            "body": {
+                "process": {
+                    "id": {
+                        "<ref>": "assets.license_process.id"
+                    }
+                },
+                "action": {
+                    "key": "end_process"
+                },
+                "key": "complete",
+                "data": {
+                    "<ref>": "assets.shipment"
+                }
+            },
+            "responses": {
+                "title": "Completed process",
+                "ok": {
+                    "display": "always"
+                }
+            }
+        }
+    },
+    "states": {
+        ":init": {
+            "actions": [ "start" ],
+            "transitions": [
+                {
+                    "action": "start",
+                    "transition": "verify"
+                }
+            ]
+        },
+        "verify": {
+            "actions": [ "verify" ],
+            "transitions": [
+                {
+                    "action": "verify",
+                    "transition": "waiting"
+                }
+            ]
+        },
+        "waiting": {
+            "actions": [ "continue", "cancel" ],
+            "transitions": [
+                {
+                    "action": "continue",
+                    "transition": "ready"
+                },
+                {
+                    "action": "cancel",
+                    "transition": ":failed"
+                }
+            ]
+        },
+        "ready": {
+            "actions": [ "transport" ],
+            "transitions": [
+                {
+                    "action": "transport",
+                    "transition": "transporting"
+                }
+            ]
+        },
+        "transporting": {
+            "actions": [ "receive" ],
+            "transitions": [
+                {
+                    "action": "receive",
+                    "transition": "received"
+                }
+            ]
+        },
+        "received": {
+            "default_action": "complete",
+            "transitions": [
+                {
+                    "action": "complete",
+                    "transition": ":done"
+                }
+            ]
+        }
+    }
+}

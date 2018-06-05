@@ -1,0 +1,17 @@
+{
+  "name": "ilt-node-example",
+  "version": "1.0.0",
+  "description": "Example script to create a process with LTO Node for ILT",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "LegalThings",
+  "license": "ISC",
+  "dependencies": {
+    "lto-api": "^0.3.3",
+    "node-uuid": "^1.4.8",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2"
+  }
+}

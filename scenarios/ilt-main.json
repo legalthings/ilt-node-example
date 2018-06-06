@@ -12,6 +12,11 @@
             "title": "License holder",
             "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
             "role": "license_holder"
+        },
+        "enforcer": {
+            "title": "Enforcer",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
+            "role": "enforcer"
         }
     },
     "assets": {
@@ -129,6 +134,10 @@
                         {
                             "select": "actors.license_holder",
                             "jmespath": "{ id: 'f53db508-9352-4280-822f-43b0e428cff6', info: { name: license_holder.name }, signkeys: { user: license_holder.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                        },
+                        {
+                            "select": "actors.enforcer",
+                            "jmespath": "{ id: '40323d2a-52cb-47e2-98a7-9c9e3447f4e2', info: { name: enforcer.name }, signkeys: { user: enforcer.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
                         }
                     ]
                 }
@@ -137,12 +146,20 @@
         "invite_holder": {
             "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#event",
             "actor": "issuer",
-            "body": {
-                "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
-                "id": { "<ref>": "actors.license_holder.id" },
-                "info": { "<ref>": "actors.license_holder.info" },
-                "signkeys": { "<ref>": "actors.license_holder.signkeys" }
-            },
+            "body": [
+                {
+                    "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
+                    "id": { "<ref>": "actors.license_holder.id" },
+                    "info": { "<ref>": "actors.license_holder.info" },
+                    "signkeys": { "<ref>": "actors.license_holder.signkeys" }
+                },
+                {
+                    "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
+                    "id": { "<ref>": "actors.enforcer.id" },
+                    "info": { "<ref>": "actors.enforcer.info" },
+                    "signkeys": { "<ref>": "actors.enforcer.signkeys" }
+                }
+            ],
             "responses": {
                 "ok": {
                     "display": "never"

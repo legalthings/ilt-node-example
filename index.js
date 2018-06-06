@@ -12,6 +12,7 @@ const licenseId = '123456';
 
   const iltAccount = iltHelper.createAccount(seed);
   const wasteCompanyAccount = iltHelper.createAccount('seed for the waste company');
+  const enforcerAccount = iltHelper.createAccount('seed for the enforcer');
 
   // Trigger the first action of the licenseScenario to instantiate the process
   const licenseInfo = {
@@ -26,6 +27,10 @@ const licenseId = '123456';
     license_holder: {
       name: 'Waste BV',
       public_key: wasteCompanyAccount.getPublicSignKey()
+    },
+    enforcer: {
+      name: 'Enforcer',
+      public_key: enforcerAccount.getPublicSignKey()
     }
   };
   let chain = iltHelper.createLicenseChain(iltAccount, licenseId, systemkey, licenseInfo);
@@ -90,7 +95,11 @@ const licenseId = '123456';
   res  = await iltHelper.sendChain(wasteCompanyAccount, chain);
 
   console.log('Shipment completed');
-  console.log(res);
+
+
+  // The enforcer should be able to load all the shipment processes connected to a license
+  const shipmentProcesses = await iltHelper.loadAllShipments(iltAccount, enforcerAccount, licenseId);
+  console.log(shipmentProcesses);
 
 })();
 

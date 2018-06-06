@@ -14,6 +14,12 @@ const licenseId = '123456';
   const wasteCompanyAccount = iltHelper.createAccount('seed for the waste company');
   const enforcerAccount = iltHelper.createAccount('seed for the enforcer');
 
+  console.log('Delete previous chain and processes');
+
+  console.log(await iltHelper.deleteMainProcess(iltAccount, licenseId));
+  console.log(await iltHelper.deleteShipmentProcess(iltAccount, licenseId, 'SH1234'));
+  console.log(await iltHelper.deleteEventChain(iltAccount, licenseId));
+
   // Trigger the first action of the licenseScenario to instantiate the process
   const licenseInfo = {
     reference: '123456',
@@ -100,6 +106,8 @@ const licenseId = '123456';
   // The enforcer should be able to load all the shipment processes connected to a license
   const shipmentProcesses = await iltHelper.loadAllShipments(iltAccount, enforcerAccount, licenseId);
   console.log(shipmentProcesses);
+
+
 
 })();
 

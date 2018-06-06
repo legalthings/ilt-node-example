@@ -3,8 +3,8 @@
     "id": "lt:/scenarios/edfbe857-9e0b-4db5-afe9-6bdf5dd1deb0",
     "title": "ILT main",
     "actors": {
-        "ilt": {
-            "title": "ILT (Dutch regulator)",
+        "issuer": {
+            "title": "Issuer",
             "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#role",
             "role": "authority"
         },
@@ -20,14 +20,14 @@
             "properties": {
                 "reference": {
                     "description": "License No",
-                    "type": "integer"
+                    "type": "string"
                 },
                 "shipments": {
                     "description": "Total number of shipments",
                     "type": "integer"
                 },
                 "quantity": {
-                    "description": "Total qualtity",
+                    "description": "Total quantity",
                     "type": "float"
                 },
                 "period": {
@@ -54,7 +54,7 @@
                     "type": "integer"
                 },
                 "quantity": {
-                    "type": "float"
+                    "type": "number"
                 }
             }
         },
@@ -67,7 +67,7 @@
                     "default": 0
                 },
                 "quantity": {
-                    "type": "float",
+                    "type": "number",
                     "default": 0.0
                 }
             }
@@ -81,8 +81,26 @@
                     "default": 0
                 },
                 "quantity": {
-                    "type": "float",
+                    "type": "number",
                     "default": 0.0
+                }
+            }
+        },
+        "new_shipment": {
+            "descriptiom": "New shipment that is being verified",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "reference": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "response": {
+                    "type": "string"
                 }
             }
         }
@@ -91,54 +109,39 @@
     },
     "actions": {
         "issue": {
-            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#data",
-            "actor": "ilt",
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#data",
+            "actor": "issuer",
             "responses": {
                 "ok": {
                     "title": "Issued new license",
                     "update": [
                         {
-                            "select": "assets.license",
-                            "data": {
-                                "<ref>": "response.data"
-                            }
+                            "select": "assets.license"
                         },
                         {
                             "select": "assets.available",
-                            "data": {
-                                "<ref>": "response.data"
-                            }
+                            "jmespath": "{shipments: shipments, quantity: quantity}"
                         },
                         {
                             "select": "actors.license_holder",
-                            "data": { "<ref>": "response.data.license_holder" }
+                            "jmespath": "{ id: 'f53db508-9352-4280-822f-43b0e428cff6', info: { name: license_holder.name }, signkeys: { user: license_holder.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
                         }
                     ]
                 }
             }
         },
         "invite_holder": {
-            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#event",
-            "actor": "ilt",
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#event",
+            "actor": "issuer",
             "body": {
-                "$schema": "http://specs.legalthings.one/v0.1.0/identity/schema.json#",
-                "id": "f53db508-9352-4280-822f-43b0e428cff6",
-                "info": {
-                    "name": {
-                        "<ref>": "response.data.license_holder.name"
-                    }
-                },
-                "signkeys": {
-                    "user": { "<ref>": "response.data.license_holder.public_key" }
-                }
+                "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
+                "id": { "<ref>": "actors.license_holder.id" },
+                "info": { "<ref>": "actors.license_holder.info" },
+                "signkeys": { "<ref>": "actors.license_holder.signkeys" }
             },
             "responses": {
                 "ok": {
-                    "display": "never",
-                    "update": {
-                        "select": "actors.license_holder",
-                        "data": "denied"
-                    }
+                    "display": "never"
                 },
                 "error": {
                     "display": "always",
@@ -147,18 +150,22 @@
             }
         },
         "verify_shipment": {
-            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#data",
-            "actor": "ilt",
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#data",
+            "actor": "issuer",
             "responses": {
                 "ok": {
-                    "display": "never"
+                    "display": "never",
+                    "update": {
+                        "select": "assets.new_shipment"
+                    }
                 }
             }
         },
         "verify_shipment_reserve": {
-            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#nop",
-            "actor": "ilt",
-            "default_response": {
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#nop",
+            "actor": "issuer",
+            "default_response": "approve",
+            "default_responseXXX": {
                 "<if>": {
                     "condition": {
                         "<eval>": "assets.available.shipments > 0 && assets.available.quantity >= assets.new_shipment.quantity"
@@ -170,8 +177,8 @@
             "responses": {
                 "approve": {
                     "display": "always",
-                    "label": {
-                        "<tpl>": "Shipment {{ assets.new_shipment.reference }} approved"
+                    "title": {
+                        "<tpl>": "Shipment '{{ assets.new_shipment.reference }}' approved"
                     },
                     "update": [
                         {
@@ -181,20 +188,32 @@
                         {
                             "select": "assets.available",
                             "data": {
-                                "<eval>": "{shipments: assets.available.shipments - `1`, quantity: assets.available.quantity - assets.new_shipment.quality}"
+                                "<apply>": {
+                                    "input": {
+                                        "current": { "<ref>": "assets.available" },
+                                        "new_shipment": { "<ref>": "assets.new_shipment" }
+                                    },
+                                    "query": "{shipments: current.shipments - `1`, quantity: current.quantity - new_shipment.quantity}"
+                                }
                             }
                         },
                         {
                             "select": "assets.reserved",
                             "data": {
-                                "<eval>": "{shipments: assets.reserved.shipments + `1`, quantity: assets.reserved.quantity + assets.new_shipment.quality}"
+                                "<apply>": {
+                                    "input": {
+                                        "current": { "<ref>": "assets.reserved" },
+                                        "new_shipment": { "<ref>": "assets.new_shipment" }
+                                    },
+                                    "query": "{shipments: current.shipments +`1`, quantity: current.quantity + new_shipment.quantity}"
+                                }
                             }
                         }
                     ]
                 },
                 "deny": {
                     "display": "always",
-                    "label": {
+                    "title": {
                         "<tpl>": "Shipment {{ assets.new_shipment.reference }} denied"
                     },
                     "update": {
@@ -205,35 +224,46 @@
             }
         },
         "verify_shipment_respond": {
-            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#event",
-            "actor": "ilt",
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#event",
+            "actor": "issuer",
             "body": {
-                "$schema": "http://specs.legalthings.one/v0.1.0/response/schema.json#",
+                "$schema": "https://specs.livecontracts.io/v0.1.0/response/schema.json#",
                 "process": {
                     "id": {
-                        "<ref>": "assets.new_shipment.id"
+                        "<tpl>": "lt:/processes/{{ assets.new_shipment.id }}"
                     }
                 },
                 "action": {
-                    "key": "verify_process"
+                    "key": {
+                        "<ref>": "assets.new_shipment.response"
+                    }
                 },
-                "key": {
-                    "<ref>": "assets.new_shipment.response"
+                "actor": {
+                    "key": "issuer"
                 },
+                "key": "ok",
                 "data": {
                     "<ref>": "assets.new_shipment"
                 }
             },
             "responses": {
                 "ok": {
-                    "title": "Cancelled process",
-                    "display": "always"
+                    "display": "never",
+                    "update": {
+                        "select": "assets.new_shipment",
+                        "data": {
+                            "id": null,
+                            "reference": null,
+                            "quantity": null,
+                            "response": null
+                        }
+                    }
                 }
             }
         },
         "end_shipment": {
-            "$schema": "http://specs.legalthings.one/v0.1.0/action/schema.json#data",
-            "actor": "ilt",
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#data",
+            "actor": "issuer",
             "responses": {
                 "complete": {
                     "title": {
@@ -244,13 +274,37 @@
                         {
                             "select": "assets.reserved",
                             "data": {
-                                "<eval>": "{shipments: assets.reserved.shipments - `1`, quantity: assets.reserved.quantity - response.data.quantity}"
+                                "<apply>": {
+                                    "input": {
+                                        "reserved": { "<ref>": "assets.reserved" },
+                                        "shipment": { "<ref>": "response.data" }
+                                    },
+                                    "query": "{ shipments: reserved.shipments - `1`, quantity: reserved.quantity - shipment.quantity }"
+                                }
                             }
                         },
                         {
                             "select": "assets.spend",
                             "data": {
-                                "<eval>": "{shipments: assets.spend.shipments + `1`, quantity: assets.reserved.quantity + response.data.quantity}"
+                                "<apply>": {
+                                    "input": {
+                                        "spend": { "<ref>": "assets.spend" },
+                                        "shipment": { "<ref>": "response.data" }
+                                    },
+                                    "query": "{ shipments: spend.shipments + `1`, quantity: spend.quantity + shipment.received_quantity }"
+                                }
+                            }
+                        },
+                        {
+                            "select": "assets.available",
+                            "data": {
+                                "<apply>": {
+                                    "input": {
+                                        "available": { "<ref>": "assets.available" },
+                                        "shipment": { "<ref>": "response.data" }
+                                    },
+                                    "query": "{ shipments: available.shipments, quantity: available.quantity + (shipment.quantity - shipment.received_quantity) }"
+                                }
                             }
                         }
                     ]
@@ -264,13 +318,19 @@
                         {
                             "select": "assets.reserved",
                             "data": {
-                                "<eval>": "{shipments: assets.reserved.shipments - `1`, quantity: assets.reserved.quantity - response.data.quality}"
+                                "<apply>": {
+                                    "input": { "<ref>": "assets" },
+                                    "query": "{shipments: reserved.shipments - `1`, quantity: reserved.quantity - new_shipment.quantity}"
+                                }
                             }
                         },
                         {
                             "select": "assets.available",
                             "data": {
-                                "<eval>": "{shipments: assets.available.shipments + `1`, quantity: assets.available.quantity + response.data.quality}"
+                                "<apply>": {
+                                    "input": { "<ref>": "assets" },
+                                    "query": "{shipments: available.shipments + `1`, quantity: available.quantity + new_shipment.quantity}"
+                                }
                             }
                         }
                     ]
@@ -286,6 +346,18 @@
             "transitions": [
                 {
                     "action": "issue",
+                    "transition": "invite_holder"
+                }
+            ]
+        },
+        "invite_holder": {
+            "default_action": "invite_holder",
+            "actions": [
+                "invite_holder"
+            ],
+            "transitions": [
+                {
+                    "action": "invite_holder",
                     "transition": "live"
                 }
             ]
@@ -305,6 +377,9 @@
         },
         "verify_shipment_reserve": {
             "default_action": "verify_shipment_reserve",
+            "actions": [
+                "verify_shipment_reserve"
+            ],
             "transitions": [
                 {
                     "action": "verify_shipment_reserve",
@@ -314,6 +389,9 @@
         },
         "verify_shipment_respond": {
             "default_action": "verify_shipment_respond",
+            "actions": [
+                "verify_shipment_respond"
+            ],
             "transitions": [
                 {
                     "action": "verify_shipment_respond",

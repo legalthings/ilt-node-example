@@ -18,6 +18,7 @@ const licenseId = '123456';
     reference: '123456',
     shipments: 3,
     quantity: 20,
+    material: 'general garbage',
     period: {
       from: '2018-01-01',
       to: '2018-12-31'
@@ -37,6 +38,9 @@ const licenseId = '123456';
 
   const shipmentInfo = {
     reference: 'SH1234',
+    material: 'general garbage',
+    package_type: 'plastic',
+    shipment_date: '2018-06-01',
     license_process: licenseProcess.id,
     quantity: 6.2,
     transport: {
@@ -44,6 +48,10 @@ const licenseId = '123456';
       public_key: transportAccount.getPublicSignKey()
     },
     recipient: {
+      name: 'Storage BV',
+      public_key: storageAccount.getPublicSignKey()
+    },
+    processor: {
       name: 'Storage BV',
       public_key: storageAccount.getPublicSignKey()
     }
@@ -78,7 +86,7 @@ const licenseId = '123456';
 
   chain = await iltHelper.loadChain(iltAccount, licenseId);
 
-  chain = iltHelper.processShipment(chain, wasteCompanyAccount, process.id);
+  chain = iltHelper.processShipment(chain, storageAccount, process.id);
   res  = await iltHelper.sendChain(wasteCompanyAccount, chain);
 
   console.log('Shipment completed');

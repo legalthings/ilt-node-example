@@ -22,6 +22,11 @@
             "title": "Recipient / Treatment facility",
             "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
             "role": "recipient"
+        },
+        "processor": {
+            "title": "Processor / Treatment facility",
+            "$ref": "https://specs.livecontracts.io/v0.1.0/actor/schema.json#organization",
+            "role": "processor"
         }
     },
     "assets": {
@@ -39,6 +44,19 @@
                 "reference": {
                     "description": "Notification No",
                     "type": "string"
+                },
+                "material": {
+                    "description": "Shipment material",
+                    "type": "string"
+                },
+                "package_type": {
+                    "description": "Package type",
+                    "type": "string"
+                },
+                "shipment_date": {
+                    "description": "Date when the shipment will take place",
+                    "type": "string",
+                    "format": "date"
                 },
                 "quantity": {
                     "description": "Intended quantity",
@@ -79,6 +97,10 @@
                         {
                             "select": "actors.recipient",
                             "jmespath": "{ id: '0af9f4f5-624b-437a-8f83-3ee11a12b80b', info: { name: recipient.name }, signkeys: { user: recipient.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                        },
+                        {
+                            "select": "actors.processor",
+                            "jmespath": "{ id: '6adece33-750f-4c27-9be3-e0e77a535e93', info: { name: processor.name }, signkeys: { user: processor.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
                         }
                     ]
                 }
@@ -166,6 +188,12 @@
                     "id": { "<ref>": "actors.recipient.id" },
                     "info": { "<ref>": "actors.recipient.info" },
                     "signkeys": { "<ref>": "actors.recipient.signkeys" }
+                },
+                {
+                    "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
+                    "id": { "<ref>": "actors.processor.id" },
+                    "info": { "<ref>": "actors.processor.info" },
+                    "signkeys": { "<ref>": "actors.processor.signkeys" }
                 }
             ],
             "responses": {
@@ -198,7 +226,7 @@
         },
         "process": {
             "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#ack",
-            "actor": "license_holder",
+            "actor": "processor",
             "responses": {
                 "ok": {
                     "label": "Transport has been processed"

@@ -65,7 +65,7 @@ const licenseId = '123456';
   console.log('Shipment started');
 
   // Loading the process should be always be done based on the ilt account, because the id of the process is created from it
-  const process = await iltHelper.loadShipmentProcess(iltAccount, licenseId);
+  const process = await iltHelper.loadShipmentProcess(iltAccount, licenseId, shipmentInfo.reference);
 
   // Loading the chain should always be done based on the ilt account, because that signkey is used to create the id
   chain = await iltHelper.loadChain(iltAccount, licenseId);

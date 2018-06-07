@@ -7,6 +7,8 @@ const licenseId = '123456';
 
 (async() => {
 
+  //// Initialization - loading all keys (accounts)
+
   const iltHelper = new ILTHelper();
   const systemkey = await iltHelper.loadSystemKey();
 
@@ -14,11 +16,20 @@ const licenseId = '123456';
   const wasteCompanyAccount = iltHelper.createAccount('seed for the waste company');
   const enforcerAccount = iltHelper.createAccount('seed for the enforcer');
 
+  const transportAccount = iltHelper.createAccount('seed for the transport company');
+  const storageAccount = iltHelper.createAccount('seed for the storage company');
+
+  const iltPublicSignKey = iltAccount.getPublicSignKey();
+
+  // Removing old chains and flows for test purposes
+
   console.log('Delete previous chain and processes');
 
   console.log(await iltHelper.deleteMainProcess(iltAccount, licenseId));
   console.log(await iltHelper.deleteShipmentProcess(iltAccount, licenseId, 'SH1234'));
   console.log(await iltHelper.deleteEventChain(iltAccount, licenseId));
+
+  //// ILT generates the license (chain)
 
   // Trigger the first action of the licenseScenario to instantiate the process
   const licenseInfo = {
@@ -42,10 +53,10 @@ const licenseId = '123456';
   let chain = iltHelper.createLicenseChain(iltAccount, licenseId, systemkey, licenseInfo);
   let res  = await iltHelper.sendChain(iltAccount, chain);
 
-  const transportAccount = iltHelper.createAccount('seed for the transport company');
-  const storageAccount = iltHelper.createAccount('seed for the storage company');
 
-  const licenseProcess = await iltHelper.loadMainProcess(iltAccount, licenseId);
+  //// License Holder (Waste BV) initiates a shipment
+
+  const licenseProcess = await iltHelper.loadMainProcess(wasteCompanyAccount, licenseId, iltPublicSignKey);
 
   const shipmentInfo = {
     reference: 'SH1234',
@@ -68,23 +79,30 @@ const licenseId = '123456';
     }
   };
 
-  chain = await iltHelper.loadChain(iltAccount, licenseId);
+  // Reload the chain because the node will have added extra events to it
+  chain = await iltHelper.loadChain(wasteCompanyAccount, licenseId, iltPublicSignKey);
 
   await iltHelper.startShipment(chain, wasteCompanyAccount, licenseId, shipmentInfo);
   res  = await iltHelper.sendChain(wasteCompanyAccount, chain);
 
   console.log('Shipment started');
 
+  //// Transporter indicates the start of a transport
+
   // Loading the process should be always be done based on the ilt account, because the id of the process is created from it
-  const process = await iltHelper.loadShipmentProcess(iltAccount, licenseId, shipmentInfo.reference);
+  const process = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey);
 
   // Loading the chain should always be done based on the ilt account, because that signkey is used to create the id
-  chain = await iltHelper.loadChain(iltAccount, licenseId);
+  chain = await iltHelper.loadChain(transportAccount, licenseId, iltPublicSignKey);
 
   chain = iltHelper.startTransport(chain, transportAccount, process.id);
   res  = await iltHelper.sendChain(transportAccount, chain);
 
   console.log('Transport started');
+
+  //// Recipeint indicates the transport is received
+
+  chain = await iltHelper.loadChain(storageAccount, licenseId, iltPublicSignKey);
 
   const transportInfo = {
     quantity: 6.0
@@ -95,16 +113,20 @@ const licenseId = '123456';
 
   console.log('Transport received');
 
-  chain = await iltHelper.loadChain(iltAccount, licenseId);
+  //// Processor indicates the transport is completed
+
+  chain = await iltHelper.loadChain(storageAccount, licenseId, iltPublicSignKey);
 
   chain = iltHelper.processShipment(chain, storageAccount, process.id);
-  res  = await iltHelper.sendChain(wasteCompanyAccount, chain);
+  res  = await iltHelper.sendChain(storageAccount, chain);
 
   console.log('Shipment completed');
 
 
+  //// Enforcer loads all the shipment data from the license
+
   // The enforcer should be able to load all the shipment processes connected to a license
-  const shipmentProcesses = await iltHelper.loadAllShipments(iltAccount, enforcerAccount, licenseId);
+  const shipmentProcesses = await iltHelper.loadAllShipments(enforcerAccount, licenseId, iltPublicSignKey);
   console.log(shipmentProcesses);
 
 

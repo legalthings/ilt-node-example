@@ -343,6 +343,36 @@
                     "title": "Complete notified"
                 }
             }
+        },
+        "notify_accept": {
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#http",
+            "actor": "issuer",
+            "url": {
+                "<ref>": "assets.notification.url"
+            },
+            "method": "POST",
+            "query": {},
+            "headers": {
+                "Content-Type": "application/json",
+                "x-auth-token": {
+                    "<ref>": "assets.notification.auth_token"
+                }
+            },
+            "data": {
+                "<merge>": [
+                    {
+                        "status": "accepted"
+                    },
+                    {
+                        "<ref>": "assets.shipment"
+                    }
+                ]
+            },
+            "responses": {
+                "ok": {
+                    "title": "Complete notified"
+                }
+            }
         }
     },
     "states": {
@@ -377,11 +407,23 @@
             "transitions": [
                 {
                     "action": "continue",
-                    "transition": "add_actors"
+                    "transition": "accepted"
                 },
                 {
                     "action": "cancel",
                     "transition": "cancelled"
+                }
+            ]
+        },
+        "accepted": {
+            "actions": [
+                "notify_accept"
+            ],
+            "default_action": "notify_accept",
+            "transitions": [
+                {
+                    "action": "notify_accept",
+                    "transition": "add_actors"
                 }
             ]
         },

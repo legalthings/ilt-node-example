@@ -77,7 +77,10 @@ const licenseId = '123456';
       name: 'Storage BV',
       public_key: storageAccount.getPublicSignKey()
     },
-    "auth_token": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57"
+    "notification": {
+      "auth_token": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57",
+      "url": "https://api.capptions.com/api/1.0/sources/lto-callback/fetch"
+    }
   };
 
   // Reload the chain because the node will have added extra events to it

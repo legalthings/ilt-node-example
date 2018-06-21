@@ -68,8 +68,16 @@
                 }
             }
         },
-        "auth_token": {
-            "type": "string"
+        "notification": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                },
+                "auth_token": {
+                    "type": "string"
+                }
+            }
         }
     },
     "actions": {
@@ -106,8 +114,8 @@
                             "jmespath": "{ id: '6adece33-750f-4c27-9be3-e0e77a535e93', info: { name: processor.name }, signkeys: { user: processor.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
                         },
                         {
-                            "select": "assets.auth_token",
-                            "jmespath": "auth_token"
+                            "select": "assets.notification",
+                            "jmespath": "notification"
                         }
                     ]
                 }
@@ -250,13 +258,15 @@
         "notify_complete": {
             "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#http",
             "actor": "issuer",
-            "url": "https://api.capptions.com/api/1.0/sources/lto-callback/fetch",
+            "url": {
+                "<ref>": "assets.notification.url"
+            },
             "method": "POST",
             "query": {},
             "headers": {
                 "Content-Type": "application/json",
                 "x-auth-token": {
-                    "<ref>": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57"
+                    "<ref>": "assets.notification.auth_token"
                 }
             },
             "data": {
@@ -307,13 +317,15 @@
         "notify_cancelled": {
             "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#http",
             "actor": "issuer",
-            "url": "https://api.capptions.com/api/1.0/sources/lto-callback/fetch",
+            "url": {
+                "<ref>": "assets.notification.url"
+            },
             "method": "POST",
             "query": {},
             "headers": {
                 "Content-Type": "application/json",
                 "x-auth-token": {
-                    "<ref>": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57"
+                    "<ref>": "assets.notification.auth_token"
                 }
             },
             "data": {

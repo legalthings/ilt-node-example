@@ -76,7 +76,8 @@ const licenseId = '123456';
     processor: {
       name: 'Storage BV',
       public_key: storageAccount.getPublicSignKey()
-    }
+    },
+    "auth_token": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57"
   };
 
   // Reload the chain because the node will have added extra events to it
@@ -90,12 +91,12 @@ const licenseId = '123456';
   //// Transporter indicates the start of a transport
 
   // Loading the process should be always be done based on the ilt account, because the id of the process is created from it
-  const process = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey);
+  const shipmentProcess = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey);
 
   // Loading the chain should always be done based on the ilt account, because that signkey is used to create the id
   chain = await iltHelper.loadChain(transportAccount, licenseId, iltPublicSignKey);
 
-  chain = iltHelper.startTransport(chain, transportAccount, process.id);
+  chain = iltHelper.startTransport(chain, transportAccount, shipmentProcess.id);
   res  = await iltHelper.sendChain(transportAccount, chain);
 
   console.log('Transport started');
@@ -108,7 +109,7 @@ const licenseId = '123456';
     quantity: 6.0
   };
 
-  chain = iltHelper.receiveTransport(chain, storageAccount, process.id, transportInfo);
+  chain = iltHelper.receiveTransport(chain, storageAccount, shipmentProcess.id, transportInfo);
   res  = await iltHelper.sendChain(storageAccount, chain);
 
   console.log('Transport received');
@@ -117,7 +118,7 @@ const licenseId = '123456';
 
   chain = await iltHelper.loadChain(storageAccount, licenseId, iltPublicSignKey);
 
-  chain = iltHelper.processShipment(chain, storageAccount, process.id);
+  chain = iltHelper.processShipment(chain, storageAccount, shipmentProcess.id);
   res  = await iltHelper.sendChain(storageAccount, chain);
 
   console.log('Shipment completed');

@@ -67,6 +67,9 @@
                     "type": "float"
                 }
             }
+        },
+        "auth_token": {
+            "type": "string"
         }
     },
     "actions": {
@@ -101,6 +104,10 @@
                         {
                             "select": "actors.processor",
                             "jmespath": "{ id: '6adece33-750f-4c27-9be3-e0e77a535e93', info: { name: processor.name }, signkeys: { user: processor.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                        },
+                        {
+                            "select": "assets.auth_token",
+                            "jmespath": "auth_token"
                         }
                     ]
                 }
@@ -126,9 +133,13 @@
                 "data": {
                     "<merge>": [
                         {
-                            "id": { "<ref>": "id" }
+                            "id": {
+                                "<ref>": "id"
+                            }
                         },
-                        { "<ref>": "assets.shipment" }
+                        {
+                            "<ref>": "assets.shipment"
+                        }
                     ]
                 }
             },
@@ -149,26 +160,11 @@
             }
         },
         "cancel": {
-            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#event",
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#nop",
             "actor": "issuer",
-            "body": {
-                "$schema": "https://specs.livecontracts.io/v0.1.0/response/schema.json#",
-                "process": {
-                    "id": {
-                        "<ref>": "assets.license_process.id"
-                    }
-                },
-                "action": {
-                    "key": "end_process"
-                },
-                "key": "cancel",
-                "data": {
-                    "<ref>": "assets.shipment"
-                }
-            },
             "responses": {
                 "ok": {
-                    "title": "Cancelled process",
+                    "title": "Shipment denied on verification",
                     "display": "always"
                 }
             }
@@ -179,21 +175,39 @@
             "body": [
                 {
                     "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
-                    "id": { "<ref>": "actors.transport.id" },
-                    "info": { "<ref>": "actors.transport.info" },
-                    "signkeys": { "<ref>": "actors.transport.signkeys" }
+                    "id": {
+                        "<ref>": "actors.transport.id"
+                    },
+                    "info": {
+                        "<ref>": "actors.transport.info"
+                    },
+                    "signkeys": {
+                        "<ref>": "actors.transport.signkeys"
+                    }
                 },
                 {
                     "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
-                    "id": { "<ref>": "actors.recipient.id" },
-                    "info": { "<ref>": "actors.recipient.info" },
-                    "signkeys": { "<ref>": "actors.recipient.signkeys" }
+                    "id": {
+                        "<ref>": "actors.recipient.id"
+                    },
+                    "info": {
+                        "<ref>": "actors.recipient.info"
+                    },
+                    "signkeys": {
+                        "<ref>": "actors.recipient.signkeys"
+                    }
                 },
                 {
                     "$schema": "https://specs.livecontracts.io/v0.1.0/identity/schema.json#",
-                    "id": { "<ref>": "actors.processor.id" },
-                    "info": { "<ref>": "actors.processor.info" },
-                    "signkeys": { "<ref>": "actors.processor.signkeys" }
+                    "id": {
+                        "<ref>": "actors.processor.id"
+                    },
+                    "info": {
+                        "<ref>": "actors.processor.info"
+                    },
+                    "signkeys": {
+                        "<ref>": "actors.processor.signkeys"
+                    }
                 }
             ],
             "responses": {
@@ -207,7 +221,7 @@
             "actor": "transport",
             "responses": {
                 "ok": {
-                    "label": "Transport has started"
+                    "title": "Transport has started"
                 }
             }
         },
@@ -216,7 +230,7 @@
             "actor": "recipient",
             "responses": {
                 "ok": {
-                    "label": "Shipment is received",
+                    "title": "Shipment is received",
                     "update": {
                         "select": "assets.shipment.received_quantity",
                         "jmespath": "quantity"
@@ -229,7 +243,36 @@
             "actor": "processor",
             "responses": {
                 "ok": {
-                    "label": "Transport has been processed"
+                    "title": "Transport has been processed"
+                }
+            }
+        },
+        "notify_complete": {
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#http",
+            "actor": "issuer",
+            "url": "https://api.capptions.com/api/1.0/sources/lto-callback/fetch",
+            "method": "POST",
+            "query": {},
+            "headers": {
+                "Content-Type": "application/json",
+                "x-auth-token": {
+                    "<ref>": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57"
+                }
+            },
+            "data": {
+                "<merge>": [
+                    {
+                        "status": "completed"
+                    },
+                    {
+                        "<ref>": "assets.shipment"
+                    }
+                ]
+
+            },
+            "responses": {
+                "ok": {
+                    "title": "Complete notified"
                 }
             }
         },
@@ -260,11 +303,41 @@
                     "display": "always"
                 }
             }
+        },
+        "notify_cancelled": {
+            "$schema": "https://specs.livecontracts.io/v0.1.0/action/schema.json#http",
+            "actor": "issuer",
+            "url": "https://api.capptions.com/api/1.0/sources/lto-callback/fetch",
+            "method": "POST",
+            "query": {},
+            "headers": {
+                "Content-Type": "application/json",
+                "x-auth-token": {
+                    "<ref>": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57"
+                }
+            },
+            "data": {
+                "<merge>": [
+                    {
+                        "status": "declined"
+                    },
+                    {
+                        "<ref>": "assets.shipment"
+                    }
+                ]
+            },
+            "responses": {
+                "ok": {
+                    "title": "Complete notified"
+                }
+            }
         }
     },
     "states": {
         ":initial": {
-            "actions": [ "start" ],
+            "actions": [
+                "start"
+            ],
             "transitions": [
                 {
                     "action": "start",
@@ -273,7 +346,9 @@
             ]
         },
         "verify": {
-            "actions": [ "verify" ],
+            "actions": [
+                "verify"
+            ],
             "default_action": "verify",
             "transitions": [
                 {
@@ -283,7 +358,10 @@
             ]
         },
         "waiting": {
-            "actions": [ "continue", "cancel" ],
+            "actions": [
+                "continue",
+                "cancel"
+            ],
             "transitions": [
                 {
                     "action": "continue",
@@ -291,12 +369,14 @@
                 },
                 {
                     "action": "cancel",
-                    "transition": ":failed"
+                    "transition": "cancelled"
                 }
             ]
         },
         "add_actors": {
-            "actions": [ "add_actors" ],
+            "actions": [
+                "add_actors"
+            ],
             "default_action": "add_actors",
             "transitions": [
                 {
@@ -306,7 +386,9 @@
             ]
         },
         "ready": {
-            "actions": [ "transport" ],
+            "actions": [
+                "transport"
+            ],
             "default_action": ":none",
             "transitions": [
                 {
@@ -316,7 +398,9 @@
             ]
         },
         "transporting": {
-            "actions": [ "receive" ],
+            "actions": [
+                "receive"
+            ],
             "transitions": [
                 {
                     "action": "receive",
@@ -325,21 +409,49 @@
             ]
         },
         "received": {
-            "actions": [ "process" ],
+            "actions": [
+                "process"
+            ],
             "transitions": [
                 {
                     "action": "process",
+                    "transition": "notify_complete"
+                }
+            ]
+        },
+        "notify_complete": {
+            "actions": [
+                "notify_complete"
+            ],
+            "default_action": "notify_complete",
+            "transitions": [
+                {
+                    "action": "notify_complete",
                     "transition": "processed"
                 }
             ]
         },
         "processed": {
-            "actions": [ "complete" ],
+            "actions": [
+                "complete"
+            ],
             "default_action": "complete",
             "transitions": [
                 {
                     "action": "complete",
                     "transition": ":success"
+                }
+            ]
+        },
+        "cancelled": {
+            "actions": [
+                "notify_cancelled"
+            ],
+            "default_action": "notify_cancelled",
+            "transitions": [
+                {
+                    "action": "notify_cancelled",
+                    "transition": ":failed"
                 }
             ]
         }

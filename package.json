@@ -9,7 +9,7 @@
   "author": "LegalThings",
   "license": "ISC",
   "dependencies": {
-    "lto-api": "^0.3.5",
+    "lto-api": "^0.4.1",
     "node-uuid": "^1.4.8",
     "request": "^2.87.0",
     "request-promise": "^4.2.2"

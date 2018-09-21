@@ -5,12 +5,22 @@ const ILTHelper = require('./lib/ILTHelper');
 const seed = 'some ilt seed';
 const licenseId = '123456';
 
+const node1 = 'http://ilt-fullnode-staging.eu-west-1.elasticbeanstalk.com';
+// const node1 = 'http://lto-fullnode-staging.eu-west-1.elasticbeanstalk.com';
+
+const timeout = ms => new Promise(res => setTimeout(res, ms));
+
 (async() => {
 
   //// Initialization - loading all keys (accounts)
 
-  const iltHelper = new ILTHelper();
+  const iltHelper = new ILTHelper(node1);
   const systemkey = await iltHelper.loadSystemKey();
+  const nodeAddress = await iltHelper.loadNodeAddress();
+
+  // const iltHelper2 = new ILTHelper(node2);
+  // const systemkey2 = await iltHelper2.loadSystemKey();
+  // const nodeAddress2 = await iltHelper2.loadNodeAddress();
 
   const iltAccount = iltHelper.createAccount(seed);
   const wasteCompanyAccount = iltHelper.createAccount('seed for the waste company');
@@ -29,6 +39,10 @@ const licenseId = '123456';
   console.log(await iltHelper.deleteShipmentProcess(iltAccount, licenseId, 'SH1234'));
   console.log(await iltHelper.deleteEventChain(iltAccount, licenseId));
 
+  // console.log(await iltHelper2.deleteMainProcess(iltAccount, licenseId));
+  // console.log(await iltHelper2.deleteShipmentProcess(iltAccount, licenseId, 'SH1234'));
+  // console.log(await iltHelper2.deleteEventChain(iltAccount, licenseId));
+
   //// ILT generates the license (chain)
 
   // Trigger the first action of the licenseScenario to instantiate the process
@@ -43,20 +57,25 @@ const licenseId = '123456';
     },
     license_holder: {
       name: 'Waste BV',
-      public_key: wasteCompanyAccount.getPublicSignKey()
+      public_key: wasteCompanyAccount.getPublicSignKey(),
+      systemkey,
+      node: nodeAddress
     },
     enforcer: {
       name: 'Enforcer',
-      public_key: enforcerAccount.getPublicSignKey()
+      public_key: enforcerAccount.getPublicSignKey(),
+      systemkey,
+      node: nodeAddress
     }
   };
-  let chain = iltHelper.createLicenseChain(iltAccount, licenseId, systemkey, licenseInfo);
+  let chain = iltHelper.createLicenseChain(iltAccount, licenseId, systemkey, licenseInfo, nodeAddress);
   let res  = await iltHelper.sendChain(iltAccount, chain);
 
+  console.log(res);
 
   //// License Holder (Waste BV) initiates a shipment
 
-  const licenseProcess = await iltHelper.loadMainProcess(wasteCompanyAccount, licenseId, iltPublicSignKey);
+  const licenseProcess = await iltHelper.loadMainProcess(wasteCompanyAccount, licenseId, iltPublicSignKey, 'live');
 
   const shipmentInfo = {
     reference: 'SH1234',
@@ -67,19 +86,25 @@ const licenseId = '123456';
     quantity: 6.2,
     transport: {
       name: 'Transport BV',
-      public_key: transportAccount.getPublicSignKey()
+      public_key: transportAccount.getPublicSignKey(),
+      systemkey: systemkey,
+      node: nodeAddress
     },
     recipient: {
       name: 'Storage BV',
-      public_key: storageAccount.getPublicSignKey()
+      public_key: storageAccount.getPublicSignKey(),
+      systemkey,
+      node: nodeAddress
     },
     processor: {
       name: 'Storage BV',
-      public_key: storageAccount.getPublicSignKey()
+      public_key: storageAccount.getPublicSignKey(),
+      systemkey,
+      node: nodeAddress
     },
     "notification": {
       "auth_token": "www.3cd308bf83f700b78fa56b68d4486d02fc3d5ee30e57",
-      "url": "https://api.capptions.com/api/1.0/sources/lto-callback/fetch"
+      "url": "http://requestbin.fullcontact.com/11qggts1"
     }
   };
 
@@ -94,7 +119,7 @@ const licenseId = '123456';
   //// Transporter indicates the start of a transport
 
   // Loading the process should be always be done based on the ilt account, because the id of the process is created from it
-  const shipmentProcess = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey);
+  const shipmentProcess = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'ready');
 
   // Loading the chain should always be done based on the ilt account, because that signkey is used to create the id
   chain = await iltHelper.loadChain(transportAccount, licenseId, iltPublicSignKey);
@@ -102,6 +127,7 @@ const licenseId = '123456';
   chain = iltHelper.startTransport(chain, transportAccount, shipmentProcess.id);
   res  = await iltHelper.sendChain(transportAccount, chain);
 
+  await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'transporting');
   console.log('Transport started');
 
   //// Recipeint indicates the transport is received
@@ -115,6 +141,7 @@ const licenseId = '123456';
   chain = iltHelper.receiveTransport(chain, storageAccount, shipmentProcess.id, transportInfo);
   res  = await iltHelper.sendChain(storageAccount, chain);
 
+  await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'received');
   console.log('Transport received');
 
   //// Processor indicates the transport is completed
@@ -124,6 +151,9 @@ const licenseId = '123456';
   chain = iltHelper.processShipment(chain, storageAccount, shipmentProcess.id);
   res  = await iltHelper.sendChain(storageAccount, chain);
 
+
+
+  await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, ':success');
   console.log('Shipment completed');
 
 

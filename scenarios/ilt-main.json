@@ -136,11 +136,11 @@
                         },
                         {
                             "select": "actors.license_holder",
-                            "jmespath": "{ id: 'f53db508-9352-4280-822f-43b0e428cff6', info: { name: license_holder.name }, signkeys: { user: license_holder.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                            "jmespath": "{ id: 'f53db508-9352-4280-822f-43b0e428cff6', info: { name: license_holder.name }, signkeys: { user: license_holder.public_key, system: license_holder.systemkey }, node: license_holder.node }"
                         },
                         {
                             "select": "actors.enforcer",
-                            "jmespath": "{ id: '40323d2a-52cb-47e2-98a7-9c9e3447f4e2', info: { name: enforcer.name }, signkeys: { user: enforcer.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                            "jmespath": "{ id: '40323d2a-52cb-47e2-98a7-9c9e3447f4e2', info: { name: enforcer.name }, signkeys: { user: enforcer.public_key, system: enforcer.systemkey }, node: enforcer.node }"
                         }
                     ]
                 }
@@ -160,6 +160,9 @@
                     },
                     "signkeys": {
                         "<ref>": "actors.license_holder.signkeys"
+                    },
+                    "node": {
+                        "<ref>": "actors.license_holder.node"
                     }
                 },
                 {
@@ -172,6 +175,9 @@
                     },
                     "signkeys": {
                         "<ref>": "actors.enforcer.signkeys"
+                    },
+                    "node": {
+                        "<ref>": "actors.enforcer.node"
                     }
                 }
             ],

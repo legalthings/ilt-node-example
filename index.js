@@ -75,7 +75,7 @@ const timeout = ms => new Promise(res => setTimeout(res, ms));
 
   //// License Holder (Waste BV) initiates a shipment
 
-  const licenseProcess = await iltHelper.loadMainProcess(wasteCompanyAccount, licenseId, iltPublicSignKey, 'live');
+  const licenseProcess = await iltHelper.loadMainProcess(wasteCompanyAccount, licenseId, iltPublicSignKey, 'live', [':initial', 'invite_holder']);
 
   const shipmentInfo = {
     reference: 'SH1234',
@@ -119,7 +119,7 @@ const timeout = ms => new Promise(res => setTimeout(res, ms));
   //// Transporter indicates the start of a transport
 
   // Loading the process should be always be done based on the ilt account, because the id of the process is created from it
-  const shipmentProcess = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'ready');
+  const shipmentProcess = await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'ready', [':initial', 'verify', 'waiting', 'accepted', 'add_actors']);
 
   // Loading the chain should always be done based on the ilt account, because that signkey is used to create the id
   chain = await iltHelper.loadChain(transportAccount, licenseId, iltPublicSignKey);
@@ -127,6 +127,7 @@ const timeout = ms => new Promise(res => setTimeout(res, ms));
   chain = iltHelper.startTransport(chain, transportAccount, shipmentProcess.id);
   res  = await iltHelper.sendChain(transportAccount, chain);
 
+  await timeout(500);
   await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'transporting');
   console.log('Transport started');
 
@@ -141,6 +142,7 @@ const timeout = ms => new Promise(res => setTimeout(res, ms));
   chain = iltHelper.receiveTransport(chain, storageAccount, shipmentProcess.id, transportInfo);
   res  = await iltHelper.sendChain(storageAccount, chain);
 
+  await timeout(500);
   await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, 'received');
   console.log('Transport received');
 
@@ -151,9 +153,8 @@ const timeout = ms => new Promise(res => setTimeout(res, ms));
   chain = iltHelper.processShipment(chain, storageAccount, shipmentProcess.id);
   res  = await iltHelper.sendChain(storageAccount, chain);
 
-
-
-  await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, ':success');
+  await timeout(500);
+  await iltHelper.loadShipmentProcess(transportAccount, licenseId, shipmentInfo.reference, iltPublicSignKey, ':success', ['notify_complete', 'processed']);
   console.log('Shipment completed');
 
 

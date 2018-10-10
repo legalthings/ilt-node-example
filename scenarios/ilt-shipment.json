@@ -103,15 +103,15 @@
                         },
                         {
                             "select": "actors.transport",
-                            "jmespath": "{ id: '5cd71225-ab88-4024-b9ce-bd65edb3ded6', info: { name: transport.name }, signkeys: { user: transport.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                            "jmespath": "{ id: '5cd71225-ab88-4024-b9ce-bd65edb3ded6', info: { name: transport.name }, signkeys: { user: transport.public_key, system: transport.systemkey }, node: transport.node }"
                         },
                         {
                             "select": "actors.recipient",
-                            "jmespath": "{ id: '0af9f4f5-624b-437a-8f83-3ee11a12b80b', info: { name: recipient.name }, signkeys: { user: recipient.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                            "jmespath": "{ id: '0af9f4f5-624b-437a-8f83-3ee11a12b80b', info: { name: recipient.name }, signkeys: { user: recipient.public_key, system: recipient.systemkey }, node: recipient.node }"
                         },
                         {
                             "select": "actors.processor",
-                            "jmespath": "{ id: '6adece33-750f-4c27-9be3-e0e77a535e93', info: { name: processor.name }, signkeys: { user: processor.public_key, system: 'FkU1XyfrCftc4pQKXCrrDyRLSnifX1SMvmx1CYiiyB3Y' } }"
+                            "jmespath": "{ id: '6adece33-750f-4c27-9be3-e0e77a535e93', info: { name: processor.name }, signkeys: { user: processor.public_key, system: processor.systemkey }, node: processor.node }"
                         },
                         {
                             "select": "assets.notification",
@@ -191,6 +191,9 @@
                     },
                     "signkeys": {
                         "<ref>": "actors.transport.signkeys"
+                    },
+                    "node": {
+                        "<ref>": "actors.transport.node"
                     }
                 },
                 {
@@ -203,6 +206,9 @@
                     },
                     "signkeys": {
                         "<ref>": "actors.recipient.signkeys"
+                    },
+                    "node": {
+                        "<ref>": "actors.recipient.node"
                     }
                 },
                 {
@@ -215,6 +221,9 @@
                     },
                     "signkeys": {
                         "<ref>": "actors.processor.signkeys"
+                    },
+                    "node": {
+                        "<ref>": "actors.processor.node"
                     }
                 }
             ],
@@ -283,6 +292,9 @@
             "responses": {
                 "ok": {
                     "title": "Complete notified"
+                },
+                "error": {
+                    "title": "Complete notification failed"
                 }
             }
         },
@@ -356,7 +368,7 @@
                 "Content-Type": "application/json",
                 "x-auth-token": {
                     "<ref>": "assets.notification.auth_token"
-                }
+            }
             },
             "data": {
                 "<merge>": [
@@ -371,6 +383,9 @@
             "responses": {
                 "ok": {
                     "title": "Complete notified"
+                },
+                "error": {
+                    "title": "Complete notification failed"
                 }
             }
         }

@@ -456,13 +456,18 @@
         },
         "ready": {
             "actions": [
-                "transport"
+                "transport",
+                "receive"
             ],
             "default_action": ":none",
             "transitions": [
                 {
                     "action": "transport",
                     "transition": "transporting"
+                },
+                {
+                    "action": "receive",
+                    "transition": "received"
                 }
             ]
         },

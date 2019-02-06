@@ -66,7 +66,8 @@ const timeout = ms => new Promise(res => setTimeout(res, ms));
       public_key: enforcerAccount.getPublicSignKey(),
       systemkey,
       node: nodeAddress
-    }
+    },
+    shipment_index: 50
   };
   let chain = iltHelper.createLicenseChain(iltAccount, licenseId, systemkey, licenseInfo, nodeAddress);
   let res  = await iltHelper.sendChain(iltAccount, chain);

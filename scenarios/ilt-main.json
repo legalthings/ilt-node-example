@@ -37,7 +37,7 @@
                 },
                 "quantity": {
                     "description": "Total quantity",
-                    "type": "float"
+                    "type": "number"
                 },
                 "period": {
                     "description": "Intended period",
@@ -52,6 +52,11 @@
                             "format": "date"
                         }
                     }
+                },
+                "shipment_index": {
+                    "description": "Shipment index",
+                    "type": "integer",
+                    "default": 0
                 }
             }
         },
@@ -128,7 +133,8 @@
                     "title": "Issued new license",
                     "update": [
                         {
-                            "select": "assets.license"
+                            "select": "assets.license",
+                            "patch": true
                         },
                         {
                             "select": "assets.available",
@@ -265,6 +271,36 @@
                                     "query": "{shipments: current.shipments +`1`, quantity: current.quantity + new_shipment.quantity}"
                                 }
                             }
+                        },
+                        {
+                            "select": "assets.new_shipment",
+                            "patch": true,
+                            "data": {
+                                "<apply>": {
+                                    "input": {
+                                        "index": {
+                                            "<ref>": "assets.license.shipment_index"
+                                        }
+                                    },
+                                    "query": "{ index: index + `1` }"
+
+                                }
+                            }
+                        },
+                        {
+                            "select": "assets.license",
+                            "patch": true,
+                            "data": {
+                                "<apply>": {
+                                    "input": {
+                                        "index": {
+                                            "<ref>": "assets.license.shipment_index"
+                                        }
+                                    },
+                                    "query": "{ shipment_index: index + `1` }"
+
+                                }
+                            }
                         }
                     ]
                 },
@@ -312,7 +348,8 @@
                             "id": null,
                             "reference": null,
                             "quantity": null,
-                            "response": null
+                            "response": null,
+                            "index": null
                         }
                     }
                 }

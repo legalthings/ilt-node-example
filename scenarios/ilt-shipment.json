@@ -60,11 +60,15 @@
                 },
                 "quantity": {
                     "description": "Intended quantity",
-                    "type": "float"
+                    "type": "number"
                 },
                 "received_quantity": {
                     "description": "Actual quantity",
-                    "type": "float"
+                    "type": "number"
+                },
+                "index": {
+                    "description": "Shipment index",
+                    "type": "integer"
                 }
             }
         },
@@ -163,7 +167,12 @@
             "responses": {
                 "ok": {
                     "title": "Transport validated",
-                    "display": "always"
+                    "display": "always",
+                    "update": {
+                        "select": "assets.shipment",
+                        "patch": true,
+                        "jmespath": "{index: index}"
+                    }
                 }
             }
         },
